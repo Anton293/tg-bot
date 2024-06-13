@@ -13,11 +13,11 @@ logging.basicConfig(
 )
 
 
-conn = sqlite3.connect('database.db')
+conn = sqlite3.connect('data/database.db')
 cursor = conn.cursor()
 cursor.execute("""CREATE TABLE IF NOT EXISTS vacancies (
     id INTEGER PRIMARY KEY,
-    date TEXT DEFAULT CURRENT_TIMESTAMP,
+    datetime TEXT DEFAULT CURRENT_TIMESTAMP,
     vacancy_count INTEGER,
     change INTEGER DEFAULT 0
 )""")
@@ -49,7 +49,10 @@ async def get_json_from_site() -> tuple[list, int]:
 async def run_hourly_parse_site():
     while True:
         list_of_vacancies, total_vacancies = await get_json_from_site()
-        conn = sqlite3.connect('database.db')
+        if total_vacancies == -1:
+            await asyncio.sleep(60)
+            continue
+        conn = sqlite3.connect('data/database.db')
         cursor = conn.cursor()
         cursor.execute("SELECT vacancy_count FROM vacancies ORDER BY id DESC LIMIT 1")
         last_vacancy_count = cursor.fetchone()
@@ -60,4 +63,4 @@ async def run_hourly_parse_site():
         cursor.execute("INSERT INTO vacancies (vacancy_count, change) VALUES (?, ?)", (total_vacancies, total_vacancies - last_vacancy_count))
         conn.commit()
         conn.close()
-        await asyncio.sleep(5)
+        await asyncio.sleep(3600)
