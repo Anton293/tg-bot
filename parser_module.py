@@ -61,7 +61,7 @@ async def run_hourly_parse_site():
         cursor = conn.execute("SELECT vacancy_count FROM vacancies ORDER BY id DESC LIMIT 1")
         last_vacancy_count = cursor.fetchone()
         if last_vacancy_count is None:
-            last_vacancy_count = 0
+            last_vacancy_count = total_vacancies
         else:
             last_vacancy_count = last_vacancy_count[0]
         conn.execute("INSERT INTO vacancies (vacancy_count, change) VALUES (?, ?)", (total_vacancies, total_vacancies - last_vacancy_count))
