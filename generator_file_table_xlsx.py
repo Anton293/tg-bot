@@ -1,7 +1,7 @@
-from sqlalchemy import create_engine, MetaData, Table, select
+from sqlalchemy import create_engine, MetaData, Table
 import pandas as pd
-from datetime import datetime
 
+import datetime
 import openpyxl
 from openpyxl import Workbook, load_workbook
 
@@ -13,14 +13,22 @@ vacancies_table = Table('vacancies', metadata, autoload=True, autoload_with=engi
 
 async def create_xlsx_table() -> None:
     conn = engine.connect()
-    current_date = datetime.now().strftime('%Y-%m-%d')
-    select_query = select([vacancies_table]).where(vacancies_table.c.datetime.like(f'{current_date}%'))
+    select_query = f""" 
+        SELECT *
+        FROM vacancies
+        WHERE datetime >= datetime('now', 'start of day');
+    """
     сursor = conn.execute(select_query)
     result = сursor.fetchall()
     conn.close()
 
+    if result == []:
+        return
+
     df = pd.DataFrame(result, columns=result[0].keys())
-    df['datetime'] = df['datetime'].apply(lambda x: x[:16])  # remove seconds
+    df['datetime'] = pd.to_datetime(df['datetime'])
+    df['datetime'] = df['datetime'] + pd.DateOffset(hours=3)
+    df['datetime'] = df['datetime'].dt.strftime('%Y-%m-%d %H:%M')
     df = df.drop(columns=['id'])
 
     wb = Workbook()
