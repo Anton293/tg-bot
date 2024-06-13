@@ -1,8 +1,9 @@
 import requests
 import json
 import logging
-import sqlite3
+import sqlite3 # delete
 import asyncio
+from sqlalchemy import create_engine, MetaData, Table, select
 
 
 logger = logging.getLogger(__name__)
@@ -12,17 +13,21 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
+engine = create_engine('sqlite:///data/database.db')
+metadata = MetaData()
+metadata.reflect(bind=engine)
 
-conn = sqlite3.connect('data/database.db')
-cursor = conn.cursor()
-cursor.execute("""CREATE TABLE IF NOT EXISTS vacancies (
+conn = engine.connect()
+conn.execute("""CREATE TABLE IF NOT EXISTS vacancies (
     id INTEGER PRIMARY KEY,
     datetime TEXT DEFAULT CURRENT_TIMESTAMP,
     vacancy_count INTEGER,
     change INTEGER DEFAULT 0
 )""")
-conn.commit()
 conn.close()
+
+
+vacancies_table = Table('vacancies', metadata, autoload=True, autoload_with=engine)
 
 
 try:
@@ -52,15 +57,13 @@ async def run_hourly_parse_site():
         if total_vacancies == -1:
             await asyncio.sleep(60)
             continue
-        conn = sqlite3.connect('data/database.db')
-        cursor = conn.cursor()
-        cursor.execute("SELECT vacancy_count FROM vacancies ORDER BY id DESC LIMIT 1")
+        conn = engine.connect()
+        cursor = conn.execute("SELECT vacancy_count FROM vacancies ORDER BY id DESC LIMIT 1")
         last_vacancy_count = cursor.fetchone()
         if last_vacancy_count is None:
             last_vacancy_count = 0
         else:
             last_vacancy_count = last_vacancy_count[0]
-        cursor.execute("INSERT INTO vacancies (vacancy_count, change) VALUES (?, ?)", (total_vacancies, total_vacancies - last_vacancy_count))
-        conn.commit()
+        conn.execute("INSERT INTO vacancies (vacancy_count, change) VALUES (?, ?)", (total_vacancies, total_vacancies - last_vacancy_count))
         conn.close()
         await asyncio.sleep(3600)

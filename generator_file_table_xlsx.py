@@ -4,8 +4,6 @@ from datetime import datetime
 
 import openpyxl
 from openpyxl import Workbook, load_workbook
-print(pd.__version__)
-print(openpyxl.__version__)
 
 engine = create_engine('sqlite:///data/database.db')
 metadata = MetaData()
