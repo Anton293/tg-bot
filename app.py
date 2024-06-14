@@ -33,16 +33,20 @@ buffer_document_xlsx = None
 
 @router.message(Command("start"))
 async def start(message: types.Message):
+    """Send start message."""
     await message.answer("Hello! Use /help to get help.")
 
 
 @router.message(Command("help"))
 async def help(message: types.Message):
-    await message.answer("Use /get_today_statistics to get statistics for today.")
+    """Send help message."""
+    help_message = "/get_today_statistic - get statistics for today. \n/help - get help."
+    await message.answer(help_message)
 
 
-@router.message(Command("get_today_statistics"))
-async def get_today_statistics(message: types.Message):
+@router.message(Command("get_today_statistic"))
+async def get_today_statistic(message: types.Message):
+    """Send xlsx file with today statistics."""
     global last_data_generation_file_xlsx, buffer_document_xlsx
 
     if (datetime.now() - last_data_generation_file_xlsx).seconds > 60*29:
@@ -54,12 +58,14 @@ async def get_today_statistics(message: types.Message):
 
 
 async def strart_telegram_bot():
+    """Start telegram bot."""
     dp.include_router(router)
     await bot.delete_webhook(drop_pending_updates=False)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
 async def main():
+    """Run parser and telegram bot."""
     await asyncio.gather(
         run_hourly_parse_site(),
         strart_telegram_bot()

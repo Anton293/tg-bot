@@ -1,7 +1,6 @@
 from sqlalchemy import create_engine, MetaData, Table
 import pandas as pd
 
-import datetime
 import openpyxl
 from openpyxl import Workbook, load_workbook
 
@@ -12,6 +11,7 @@ vacancies_table = Table('vacancies', metadata, autoload=True, autoload_with=engi
 
 
 async def create_xlsx_table() -> None:
+    """Create xlsx table with vacancies data. Save it in data/vacancies_data.xlsx."""
     conn = engine.connect()
     select_query = f""" 
         SELECT *

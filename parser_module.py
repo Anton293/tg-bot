@@ -1,7 +1,6 @@
 import requests
 import json
 import logging
-import sqlite3 # delete
 import asyncio
 from sqlalchemy import create_engine, MetaData, Table, select
 
@@ -27,9 +26,6 @@ conn.execute("""CREATE TABLE IF NOT EXISTS vacancies (
 conn.close()
 
 
-vacancies_table = Table('vacancies', metadata, autoload=True, autoload_with=engine)
-
-
 try:
     with open("query.json") as f:
         query = json.load(f)
@@ -39,6 +35,7 @@ except FileNotFoundError:
 
 
 async def get_json_from_site() -> tuple[list, int]:
+    """Get json data from robota.ua."""
     request_result = requests.post(
         "https://dracula.robota.ua/?q=getPublishedVacanciesList", 
         json=query,
@@ -52,6 +49,7 @@ async def get_json_from_site() -> tuple[list, int]:
 
 
 async def run_hourly_parse_site():
+    """Run hourly parse site."""
     while True:
         list_of_vacancies, total_vacancies = await get_json_from_site()
         if total_vacancies == -1:
